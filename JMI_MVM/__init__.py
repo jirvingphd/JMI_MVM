@@ -1,77 +1,150 @@
-name = "JMI_MVM"
-help_ = " Recommended Functions to try: \n calc_roc_auc & tune_params\n plot_hist_scat_sns & multiplot\n list2df & df_drop_regex\n plot_wide_kde_thin_bar & make_violinplot\n"
+name = "JMI_MVM v0.1.1"
+help_ = print(f" Recommended Functions to try: \n tune_params_trees \n plot_hist_scat_sns & multiplot\n list2df & df_drop_regex\n plot_wide_kde_thin_bar & make_violinplot\n")
 #functions.py
-
+print("Imported the following:\n pandas (pd), numpy(np), matplotlib.pyplot(plt), matplotlib(mpl), seaborn(sns)")
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib as mpl
 import seaborn as sns
 
+   
+def list2df(list):#, sort_values='index'):
+    """ Take in a list where row[0] = column_names and outputs a dataframe.
+    
+    Keyword arguments:
+    set_index -- df.set_index(set_index)
+    sortby -- df.sorted()
+    """    
+    
+    df_list = pd.DataFrame(list[1:],columns=list[0])
+    return df_list
 
-def calc_roc_auc(X_test,y_test,dtc,verbose=False):
+def df_drop_regex(DF, regex_list):
+    '''Use a list of regex to remove columns names. Returns new df.
+    
+    Parameters:
+        DF -- input dataframe to remove columns from.
+        regex_list -- list of string patterns or regexp to remove.
+    
+    Returns:
+        df_cut -- input df without the dropped columns. 
+        '''
+    df_cut = DF.copy()
+    
+    for r in regex_list:
+        
+        df_cut = df_cut[df_cut.columns.drop(list(df_cut.filter(regex=r)))]
+        print(f'Removed {r}\n')
+        
+    return df_cut
+
+def viz_tree(tree_object):
+    '''Takes a Sklearn Decision Tree and returns a png image using graph_viz and pydotplus.'''
+    # Visualize the decision tree using graph viz library 
+    from sklearn.externals.six import StringIO  
+    from IPython.display import Image  
+    from sklearn.tree import export_graphviz
+    import pydotplus
+    dot_data = StringIO()
+    export_graphviz(tree_object, out_file=dot_data, filled=True, rounded=True,special_characters=True)
+    graph = pydotplus.graph_from_dot_data(dot_data.getvalue())  
+    tree_viz = Image(graph.create_png())
+    return tree_viz
+
+
+
+def performance_r2_mse(y_true, y_pred):
+    """ Calculates and returns the performance score between 
+        true and predicted values based on the metric chosen. """
+    from sklearn.metrics import r2_score
+    from sklearn.metrics import mean_squared_error as mse
+    
+    r2 = r2_score(y_true,y_pred)
+    MSE = mse(y_true,y_pred)    
+    return r2, MSE
+
+# def performance_roc_auc(X_test,y_test,dtc,verbose=False):
+def performance_roc_auc(y_true,y_pred):
     """Tests the results of an already-fit classifer. 
-    Takes X_test, y_test, classifer, verbose (True" print result)
-    Returns the AUC for the roc_curve as a %"""
-    y_pred = dtc.predict(X_test)
-
+    Takes y_true (test split), and y_pred (model.predict()), returns the AUC for the roc_curve as a %"""
     FP_rate, TP_rate, thresh = roc_curve(y_test,y_pred)
     roc_auc = auc(FP_rate,TP_rate)
     roc_auc_perc = round(roc_auc*100,3)
-    # Your code here 
-    if verbose:
-        print(f"roc_curve's auc = {roc_auc_perc}%")
     return roc_auc_perc
 
-def tune_params(param_name, param_values):
-    """Takes in param_name to tune with param_values, plots train vs test AUC's. 
-    Returns df_results and df_style with color coded results"""
-    res_list = [[param_name,'train_roc_auc','test_roc_auc']]
-
-    # Loop through all values in param_values
-    for value in param_values:
-        # Create Model, set params
-        dtc_temp = DecisionTreeClassifier(criterion='entropy')
-        params={param_name:value}
-        dtc_temp.set_params(**params)
-
-        # Fit model
-        dtc_temp.fit(X_train, y_train)
-        
-        # Get roc_auc for training data
-        train_roc_auc = calc_roc_auc(X_train,y_train,dtc_temp)
-        # Get roc_auc for test data
-        test_res_roc_auc = calc_roc_auc(X_test,y_test,dtc_temp)
-        # Append value and results to res_list
-        res_list.append([value,train_roc_auc,test_res_roc_auc])
-
-    # Turn results into df_results (basically same as using list2df)
-    df_results = pd.DataFrame(res_list[1:],columns=res_list[0])
-    df_results.set_index(param_name,inplace=True)
+def tune_params_trees(param_name, param_values, DecisionTreeObject, perform_metric='r2_mse'):
+    '''Takes a parame_name (str), param_values (list/array), a DecisionTreeObject, and a perform_metric.
+    Loops through the param_values and re-fits the model and saves performance metrics. Displays color-mapped dataframe of results and line graph.
     
-    # Plot df_results
-    df_results.plot()
+    Perform_metric can be 'r2_mse' or 'roc_auc'.
+    Returns:
+    - df of results
+    - styled-df'''
+    
+    # Create results depending on performance metric
+    if perform_metric=='r2_mse':
+        results = [['param_name','param_value','r2_test','MSE_test']]
         
-    # Color-coded dataframe s
+    elif perform_metric=='roc_auc':
+        results =  [['param_name','param_value','roc_auc_test']]
+    print(f'Using performance metrics: {perform_metric}')
+    
+    # Rename Deicision Tree for looping
+    dtr_tune =  DecisionTreeObject
+    
+    # Loop through each param_value
+    for value in param_values:
+
+        # Set the parameters and fit the model
+        dtr_tune.set_params(**{param_name:value})
+        dtr_tune.fit(X_train,y_train)
+
+        # Get predicitons and test_performance
+        y_preds = dtr_tune.predict(X_test)
+        
+        # Perform correct performance metric and append results
+        if perform_metric=='r2_mse':
+            
+            r2_test, mse_test = performance_r2_mse(y_test,y_preds)
+            results.append([param_name,value,r2_test,mse_test])
+        
+        elif perform_metric=='roc_auc':
+            
+            roc_auc_test = performance_roc_auc(y_test,y_preds)
+            results.append([param_name,value,roc_auc_test])
+     
+
+    # Convert results to dataframe, set index
+    df_results = list2df(results);
+    df_results.set_index('param_value',inplace=True)
+
+
+    # Plot the values in results
+    df_results.plot(subplots=True,sharex=True)
+
+    # Style dataframe for easy visualization
     import seaborn as sns
     cm = sns.light_palette("green", as_cmap=True)
-    df_syle = df_results.style.background_gradient(cmap=cm)#,low=results.min(),high=results.max())
-
-    return df_results, df_syle
-
+    df_style = df_results.style.background_gradient(cmap=cm,subset=['r2_test','MSE_test'])#,low=results.min(),high=results.max())
+    # Display styled dataframe
+    from IPython.display import display  
+    display(df_style)
+    
+    return df_results
 
 # MULTIPLOT
-from string import ascii_letters
-import numpy as np
-import pandas as pd
-import seaborn as sns
-import matplotlib.pyplot as plt
-
 
 def multiplot(df):
     """Plots results from df.corr() in a correlation heat map for multicollinearity.
     Returns fig, ax objects"""
     sns.set(style="white")
+    from string import ascii_letters
+    import numpy as np
+    import pandas as pd
+    import seaborn as sns
+    import matplotlib.pyplot as plt
+
 
     # Compute the correlation matrix
     corr = df.corr()
@@ -324,39 +397,6 @@ def plot_pdfs(cohen_d=2):
     o, s = overlap_superiority(group1, group2)
     print('overlap', o)
     print('superiority', s)
-   
-def list2df(list):#, sort_values='index'):
-    """ Take in a list where row[0] = column_names and outputs a dataframe.
-    
-    Keyword arguments:
-    set_index -- df.set_index(set_index)
-    sortby -- df.sorted()
-    """    
-    
-    df_list = pd.DataFrame(list[1:],columns=list[0])
-#     df_list = df_list[1:]
-
-    return df_list
-
-def df_drop_regex(DF, regex_list):
-    '''Use a list of regex to remove columns names. Returns new df.
-    
-    Parameters:
-        DF -- input dataframe to remove columns from.
-        regex_list -- list of string patterns or regexp to remove.
-    
-    Returns:
-        df_cut -- input df without the dropped columns. 
-        '''
-    df_cut = DF.copy()
-    
-    for r in regex_list:
-        
-        df_cut = df_cut[df_cut.columns.drop(list(df_cut.filter(regex=r)))]
-        print(f'Removed {r}\n')
-        
-    return df_cut
-
 
 
 ####### MIKE's PLOTTING
