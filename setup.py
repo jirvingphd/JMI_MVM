@@ -13,7 +13,7 @@ setuptools.setup(
     long_description_content_type="text/markdown",
     url="https://github.com/jirvingphd/JMI_MVM",
     packages=setuptools.find_packages(),
-    install_requires=['numpy','pandas','seaborn','matplotlib','sklearn','pydotplus','scipy'],
+    install_requires=['numpy','pandas','seaborn','matplotlib','sklearn','pydotplus','scipy','xgboost'],
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",
