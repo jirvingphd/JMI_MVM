@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="JMI_MVM",
-    version="0.1.2",
+    version="0.1.3",
     author="James M. Irving, Michael V. Moravetz",
     author_email="james.irving.phd@outlook.com",
     description="A collection of our functions and classes from bootcamp. ",
@@ -13,7 +13,7 @@ setuptools.setup(
     long_description_content_type="text/markdown",
     url="https://github.com/jirvingphd/JMI_MVM",
     packages=setuptools.find_packages(),
-    install_requires=['numpy','pandas','seaborn','matplotlib','sklearn','pydotplus'],
+    install_requires=['numpy','pandas','seaborn','matplotlib','sklearn','pydotplus','scipy'],
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",

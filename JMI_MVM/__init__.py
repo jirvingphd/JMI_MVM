@@ -1,14 +1,42 @@
-name = "JMI_MVM v0.1.1"
+name = "JMI_MVM v0.1.3"
 help_ = print(f" Recommended Functions to try: \n tune_params_trees \n plot_hist_scat_sns & multiplot\n list2df & df_drop_regex\n plot_wide_kde_thin_bar & make_violinplot\n")
 #functions.py
-print("Imported the following:\n pandas (pd), numpy(np), matplotlib.pyplot(plt), matplotlib(mpl), seaborn(sns), IPython.display(display)")
+# # List of Functions Included (plus abbrevs for imported packages i.e. sns, np, plt)
+# df_functions = pd.DataFrame([x for x in dir(JMI_MVM) if '__' not in x])
+# df_functions.columns=['Available_Functions']
+# df_functions.set_index('Available_Functions',inplace=True)
+# df_functions
+# print("Imported the following:\n pandas (pd), numpy(np), matplotlib.pyplot(plt), matplotlib(mpl), seaborn(sns), IPython.display(display)")
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib as mpl
 import seaborn as sns
+import scipy.stats as sts
 from IPython.display import display
+import_dict = {'pandas':'pd',
+                 'numpy':'np',
+                 'matplotlib':'mpl',
+                 'matplotlib.pyplot':'plt',
+                 'seaborn':'sns',
+                 'scip.stats.':'sts',
+                 }
+# index_range = list(range(1,len(import_dict)))
+df_imported= pd.DataFrame.from_dict(import_dict,orient='index', columns=['Module/Package Handle'])
+list_packages = df_imported.index
+df_imported.reset_index(inplace=True)
+df_imported.columns=['Imported Module/Package','Imported As']
 
+display(df_imported)
+
+function_list = ('list2df','df_drop_regex','viz_tree','performance_r2_mse','performance_roc_auc',
+'performance_roc_auc','tune_params_trees','multiplot','plot_hist_scat_sns','detect_outliers','describe_outliers','Cohen_d',
+'draw_violinplot','subplot_imshow','plot_wide_kde_thin_bar','confusion_matrix','scale_data')
+excluded='plot_pdf'
+function_series = pd.DataFrame(function_list,columns=['List of Available Functions'])
+# function_series.Name='Package_Functions'
+display(function_series)
+   
    
 def list2df(list):#, sort_values='index'):
     """ Take in a list where row[0] = column_names and outputs a dataframe.
@@ -69,12 +97,13 @@ def performance_r2_mse(y_true, y_pred):
 def performance_roc_auc(y_true,y_pred):
     """Tests the results of an already-fit classifer. 
     Takes y_true (test split), and y_pred (model.predict()), returns the AUC for the roc_curve as a %"""
-    FP_rate, TP_rate, thresh = roc_curve(y_test,y_pred)
+    from sklearn.metrics import roc_curve, auc
+    FP_rate, TP_rate, _ = roc_curve(y_true,y_pred)
     roc_auc = auc(FP_rate,TP_rate)
     roc_auc_perc = round(roc_auc*100,3)
     return roc_auc_perc
 
-def tune_params_trees(param_name, param_values, DecisionTreeObject, perform_metric='r2_mse'):
+def tune_params_trees(param_name, param_values, DecisionTreeObject, X,Y,test_size=0.25,perform_metric='r2_mse'):
     '''Takes a parame_name (str), param_values (list/array), a DecisionTreeObject, and a perform_metric.
     Loops through the param_values and re-fits the model and saves performance metrics. Displays color-mapped dataframe of results and line graph.
     
@@ -82,7 +111,10 @@ def tune_params_trees(param_name, param_values, DecisionTreeObject, perform_metr
     Returns:
     - df of results
     - styled-df'''
-    
+
+    from sklearn.model_selection import train_test_split
+    X_train, X_test, y_train, y_test = train_test_split(test_size=test_size)
+
     # Create results depending on performance metric
     if perform_metric=='r2_mse':
         results = [['param_name','param_value','r2_test','MSE_test']]
@@ -117,7 +149,7 @@ def tune_params_trees(param_name, param_values, DecisionTreeObject, perform_metr
      
 
     # Convert results to dataframe, set index
-    df_results = list2df(results);
+    df_results = list2df(results)
     df_results.set_index('param_value',inplace=True)
 
 
@@ -206,8 +238,8 @@ def plot_hist_scat_sns(df, target='index'):
                     'fontfamily':'serif'}
 
         # Formatting dollar sign labels
-        fmtPrice = '${x:,.0f}'
-        tickPrice = mtick.StrMethodFormatter(fmtPrice)
+        # fmtPrice = '${x:,.0f}'
+        # tickPrice = mtick.StrMethodFormatter(fmtPrice)
 
 
         ###  PLOTTING ----------------------------- ------------------------ ##
@@ -299,7 +331,7 @@ def plot_hist_scat_sns(df, target='index'):
 
             # Optimizing spatial layout
             fig.tight_layout()
-            figtitle=column+'_dist_regr_plots.png'
+            # figtitle=column+'_dist_regr_plots.png'
 #             plt.savefig(figtitle)
     return 
 
@@ -342,6 +374,7 @@ def detect_outliers(df, n, features):
         outlier_indices.extend(outlier_list_col)
         
         # select observations containing more than 2 outliers
+        from collections import Counter
         outlier_indices = Counter(outlier_indices)        
         multiple_outliers = list( k for k, v in outlier_indices.items() if v > n )
     return multiple_outliers 
@@ -354,7 +387,7 @@ def describe_outliers(df):
     out_count = 0
     new_df = pd.DataFrame(columns=['total_outliers', 'percent_total'])
     for col in df.columns:
-        outies = detect_outliers(df[col])
+        outies = detect_outliers(df[col],0)
         out_count += len(outies) 
         new_df.loc[col] = [len(outies), round((len(outies)/len(df.index))*100, 2)]
     new_df.loc['grand_total'] = [sum(new_df['total_outliers']), sum(new_df['percent_total'])]
@@ -382,23 +415,24 @@ def Cohen_d(group1, group2):
     
     return d
 
-
-def plot_pdfs(cohen_d=2):
-    """Plot PDFs for distributions that differ by some number of stds.
+## commented out due to missing evaluate_PDF function
+# def plot_pdfs(cohen_d=2):
+#     """Plot PDFs for distributions that differ by some number of stds.
     
-    cohen_d: number of standard deviations between the means
-    """
-    group1 = scipy.stats.norm(0, 1)
-    group2 = scipy.stats.norm(cohen_d, 1)
-    xs, ys = evaluate_PDF(group1)
-    pyplot.fill_between(xs, ys, label='Group1', color='#ff2289', alpha=0.7)
+#     cohen_d: number of standard deviations between the means
+#     """
+#     import scipy 
+#     group1 = scipy.stats.norm(0, 1)
+#     group2 = scipy.stats.norm(cohen_d, 1)
+#     xs, ys = evaluate_PDF(group1)
+#     pyplot.fill_between(xs, ys, label='Group1', color='#ff2289', alpha=0.7)
 
-    xs, ys = evaluate_PDF(group2)
-    pyplot.fill_between(xs, ys, label='Group2', color='#376cb0', alpha=0.7)
+#     xs, ys = evaluate_PDF(group2)
+#     pyplot.fill_between(xs, ys, label='Group2', color='#376cb0', alpha=0.7)
     
-    o, s = overlap_superiority(group1, group2)
-    print('overlap', o)
-    print('superiority', s)
+#     o, s = overlap_superiority(group1, group2)
+#     print('overlap', o)
+#     print('superiority', s)
 
 
 ####### MIKE's PLOTTING
@@ -428,7 +462,7 @@ def draw_violinplot(x , y, hue=None, data=None, title=None,
     
     ax.set(xlabel= x.name.title(),
           ylabel= y.name.title(),
-           xticklabels=ticks)
+           xticklabels=ticklabels)
     
     ax.axhline( y.mean(),
                label='Total Mean',
@@ -456,6 +490,7 @@ def subplot_imshow(images, num_images,num_rows, num_cols, figsize=(20,15)):
     
     returns:  figure with as many subplots as images given
     '''
+    import matplotlib.pyplot as plt
     fig = plt.figure(figsize=figsize)
     for i in range(num_images):
         ax = fig.add_subplot(num_rows,num_cols, i+1, xticks=[], yticks=[])
@@ -609,12 +644,7 @@ def plot_wide_kde_thin_bar(series1,sname1, series2, sname2):
         labels = [x.get_text() for x in test]
         ax1.set_xticklabels([plotS1['label'],plotS2['label']], rotation=45,ha='center')
         
-#         xlab = [x.get_text() for x in xlablist]
-#         ax[1].set_xticklabels(xlab,rotation=45)
-        
-#         fig.savefig('H1_EDA_using_gridspec.png')
-#         plt.tight_layout()
-    #     print(f')
+
         plt.show()
 
         return fig,ax

@@ -1,0 +1,40 @@
+CSS = """
+table.dataframe td, table.dataframe th { /* This is for the borders for columns)*/
+    border: 2px solid black
+    border-collapse:collapse;
+    text-align:center;
+}
+table.dataframe th {
+    /*padding:1em 1em;*/
+    background-color: #000000;
+    color: #ffffff;
+    text-align: center;
+    font-weight: bold;
+    font-size: 12pt
+    font-weight: bold;
+    padding: 0.5em 0.5em;
+}
+table.dataframe td:not(:th){
+    /*border: 1px solid ##e8e8ea;*/
+    /*background-color: ##e8e8ea;*/
+    background-color: gainsboro;
+    text-align: center; 
+    vertical-align: middle;
+    font-size:10pt;
+    padding: 0.7em 1em;
+    /*padding: 0.1em 0.1em;*/
+}
+table.dataframe tr:not(:last-child) {
+    border-bottom: 1px solid gainsboro;
+}
+table.dataframe {
+    /*border-collapse: collapse;*/
+    background-color: gainsboro; /* This is alternate rows*/
+    text-align: center;
+    border: 2px solid black;
+}
+table.dataframe th:not(:empty), table.dataframe td{
+    border-right: 1px solid white;
+    text-align: center;
+}
+"""
