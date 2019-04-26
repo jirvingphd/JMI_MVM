@@ -729,3 +729,40 @@ def scale_data(data, method='minmax', log=False):
     return df_scaled
 
 
+def select_pca(features, n_components):
+    
+    '''
+    Takes features and list of n_components to run PCA on
+    
+    Params:
+    ----------
+    features: pd.Dataframe
+    n_components: list of ints to pass to PCA n_component parameter
+    
+    returns:
+    ----------
+    pd.DataFrame, displays number of components and their respective 
+    explained variance ratio
+    '''
+    
+    from JMI_MVM import list2df
+    from sklearn.decomposition import PCA
+    
+    # Create list to store results in
+    results = [['n_components', 'Explained Variance']]
+    
+    # Loop through list of components to do PCA on
+    for n in n_components:
+        
+        # Creat instance of PCA class
+        pca = PCA(n_components=n)
+        pca.fit_transform(features)
+        
+        # Create list of n_component and Explained Variance
+        component_variance = [n, np.sum(pca.explained_variance_ratio_)]
+        
+        # Append list results list
+        results.append(component_variance)
+        
+        # Use list2df to display results in DataFrame
+    return list2df(results)
