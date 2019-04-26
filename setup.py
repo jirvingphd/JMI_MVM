@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="JMI_MVM",
-    version="0.1.3",
+    version="0.1.4",
     author="James M. Irving, Michael V. Moravetz",
     author_email="james.irving.phd@outlook.com",
     description="A collection of our functions and classes from bootcamp. ",
