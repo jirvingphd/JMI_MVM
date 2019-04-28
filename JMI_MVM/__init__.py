@@ -47,26 +47,73 @@ df_imported= pd.DataFrame.from_dict(import_dict,orient='index', columns=['Module
 list_packages = df_imported.index
 df_imported.reset_index(inplace=True)
 df_imported.columns=['Imported Module/Package','Imported As']
+df_imported.set_index('Imported Module/Package',inplace=True)
+# inspect_df(df)
+from IPython.display import HTML
+pd.set_option('display.precision',3)
+pd.set_option('display.html.border',2)
+# pd.set_option('display.notebook_repr_htm',True)
+pd.set_option('display.max_columns',None)
+# pd.set_option('display.html.table_schema',True)
 
+CSS="""
+.{
+text-align: center;
+}
+th{
+background-color: black;
+color: white;
+font-family:serif;
+font-size:1.2em;
+}
+td{
+font-size:0.9em
+}
+td, th{
+text-align: center;
+}
+
+"""
+# HTML('<style>.output {flex-direction: row;}</style>')
 display(df_imported)
+HTML(f"<style>{CSS}</style>")
+def html_off():
+    HTML("<style></style>")
+def html_on(CSS):
+    HTML(f'<style>{CSS}</style>')
 
-function_list = ('list2df','df_drop_regex','viz_tree','performance_r2_mse','performance_roc_auc',
+function_list = ('color_true_rlist2df','df_drop_regex','viz_tree','performance_r2_mse','performance_roc_auc',
 'performance_roc_auc','tune_params_trees','multiplot','plot_hist_scat_sns','detect_outliers','describe_outliers','Cohen_d',
 'draw_violinplot','subplot_imshow','plot_wide_kde_thin_bar','confusion_matrix','scale_data')
 excluded='plot_pdf'
 function_series = pd.DataFrame(function_list,columns=['List of Available Functions'])
-# function_series.Name='Package_Functions'
+function_series.Name='Package_Functions'
 display(function_series)
 
+def color_true_green(val):
+    """s = df.style.applymap(color_true_green)
+    returns CSS color tag for green text"""
+    color='green' if val==True else 'black'
+    return f'color: {color}' 
 
-def list2df(list):#, sort_values='index'):
+def inspect_df(df):
+    pd.set_option('display.precision',3)
+    pd.set_option('display.html.border',2)
+    pd.set_option('display.notebook_repr_htm',True)
+    display(df.head(2))
+    display(df.info()),display(df.describe())
+
+def list2df(list,styled=True):#, sort_values='index'):
     """ Take in a list where row[0] = column_names and outputs a dataframe.
     
     Keyword arguments:
     set_index -- df.set_index(set_index)
     sortby -- df.sorted()
     """    
-    
+    if styled==True:
+        html_on(CSS)
+    else:
+        html_off()
     df_list = pd.DataFrame(list[1:],columns=list[0])
     return df_list
 
@@ -782,3 +829,6 @@ def select_pca(features, n_components):
         # Use list2df to display results in DataFrame
     return list2df(results)
 
+
+
+html_on(CSS)
