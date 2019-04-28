@@ -3,46 +3,7 @@
 # from .functions import *
 
 
-CSS = """
-table.dataframe td, table.dataframe th { /* This is for the borders for columns)*/
-    border: 2px solid black
-    border-collapse:collapse;
-    text-align:center;
-}
-table.dataframe th {
-    /*padding:1em 1em;*/
-    background-color: #000000;
-    color: #ffffff;
-    text-align: center;
-    font-weight: bold;
-    font-size: 12pt
-    font-weight: bold;
-    padding: 0.5em 0.5em;
-}
-table.dataframe td:not(:th){
-    /*border: 1px solid ##e8e8ea;*/
-    /*background-color: ##e8e8ea;*/
-    background-color: gainsboro;
-    text-align: center; 
-    vertical-align: middle;
-    font-size:10pt;
-    padding: 0.7em 1em;
-    /*padding: 0.1em 0.1em;*/
-}
-table.dataframe tr:not(:last-child) {
-    border-bottom: 1px solid gainsboro;
-}
-table.dataframe {
-    /*border-collapse: collapse;*/
-    background-color: gainsboro; /* This is alternate rows*/
-    text-align: center;
-    border: 2px solid black;
-}
-table.dataframe th:not(:empty), table.dataframe td{
-    border-right: 1px solid white;
-    text-align: center;
-}
-"""
+
 # help_ = print(f" Recommended Functions to try: \n tune_params_trees \n plot_hist_scat_sns & multiplot\n list2df & df_drop_regex\n plot_wide_kde_thin_bar & make_violinplot\n")
 #functions.py
 # import pandas as pd
@@ -262,8 +223,7 @@ def multiplot(df):
 
 
 # Plots histogram and scatter (vs price) side by side
-# Plots histogram and scatter (vs price) side by side
-def plot_hist_scat_sns(df, target='index'):
+def plot_hist_reg(df, target='index'):
     """Plots seaborne distplots and regplots for columns im datamframe vs target.
 
     Parameters:
@@ -279,22 +239,19 @@ def plot_hist_scat_sns(df, target='index'):
     
     with plt.style.context(('dark_background')):
         ###  DEFINE AESTHETIC CUSTOMIZATIONS  -------------------------------##
-
-
-#         plt.style.use('dark_background')
-        figsize=(9,7)
+        figsize=(14,10)
 
         # Axis Label fonts
-        fontTitle = {'fontsize': 14,
+        fontTitle = {'fontsize': 16,
                    'fontweight': 'bold',
                     'fontfamily':'serif'}
 
-        fontAxis = {'fontsize': 12,
-                   'fontweight': 'medium',
+        fontAxis = {'fontsize': 14,
+                   'fontweight': 'bold',
                     'fontfamily':'serif'}
 
-        fontTicks = {'fontsize': 8,
-                   'fontweight':'medium',
+        fontTicks = {'fontsize': 12,
+                   'fontweight':'bold',
                     'fontfamily':'serif'}
 
         # Formatting dollar sign labels
@@ -306,7 +263,6 @@ def plot_hist_scat_sns(df, target='index'):
 
         # Loop through dataframe to plot
         for column in df.describe():
-#             print(f'\nCurrent column: {column}')
 
             # Create figure with subplots for current column
             fig, ax = plt.subplots(figsize=figsize, ncols=2, nrows=2)
@@ -316,8 +272,8 @@ def plot_hist_scat_sns(df, target='index'):
             ax[i,j].set_title(column.capitalize(),fontdict=fontTitle)
 
             # Define graphing keyword dictionaries for distplot (Subplot 1)
-            hist_kws = {"linewidth": 1, "alpha": 1, "color": 'blue','edgecolor':'w'}
-            kde_kws = {"color": "white", "linewidth": 1, "label": "KDE"}
+            hist_kws = {"linewidth": 1, "alpha": 1, "color": 'steelblue','edgecolor':'w','hatch':'\\'}
+            kde_kws = {"color": "white", "linewidth": 3, "label": "KDE",'alpha':0.7}
 
             # Plot distplot on ax[i,j] using hist_kws and kde_kws
             sns.distplot(df[column], norm_hist=True, kde=True,
@@ -353,8 +309,8 @@ def plot_hist_scat_sns(df, target='index'):
             ax[i,j].set_title(column.capitalize(),fontdict=fontTitle)
 
             # Define the kwd dictionaries for scatter and regression line (subplot 2)
-            line_kws={"color":"white","alpha":0.5,"lw":4,"ls":":"}
-            scatter_kws={'s': 2, 'alpha': 0.5,'marker':'.','color':'blue'}
+            line_kws={"color":"white","alpha":0.5,"lw":3,"ls":":"}
+            scatter_kws={'s': 2, 'alpha': 0.8,'marker':'.','color':'steelblue'}
 
             # Plot regplot on ax[i,j] using line_kws and scatter_kws
             sns.regplot(df[column], df[target], 
@@ -371,14 +327,12 @@ def plot_hist_scat_sns(df, target='index'):
             ax[i,j].xaxis.set_major_formatter(mtick.ScalarFormatter())
 
             # Set  y-axis label
-            ax[i,j].set_ylabel(target,fontdict=fontAxis)
+            ax[i,j].set_ylabel(target.title(),fontdict=fontAxis)
 
             # Get, set, and format y-axis Price labels
             yticklab = ax[i,j].get_yticklabels()
             ax[i,j].set_yticklabels(yticklab,fontdict=fontTicks)
             ax[i,j].yaxis.set_major_formatter(mtick.ScalarFormatter())
-
-    #         ax[i,j].get_yaxis().set_major_formatter(tickPrice) 
 
             # Set y-grid
             ax[i, j].set_axisbelow(True)
@@ -392,8 +346,9 @@ def plot_hist_scat_sns(df, target='index'):
             # Optimizing spatial layout
             fig.tight_layout()
             # figtitle=column+'_dist_regr_plots.png'
-#             plt.savefig(figtitle)
-    return 
+            # plt.savefig(figtitle)
+    return fig, ax
+
 
 # Tukey's method using IQR to eliminate 
 def detect_outliers(df, n, features):
@@ -826,3 +781,4 @@ def select_pca(features, n_components):
         
         # Use list2df to display results in DataFrame
     return list2df(results)
+
