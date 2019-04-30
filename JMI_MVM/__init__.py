@@ -43,11 +43,12 @@ import_dict = {'pandas':'pd',
                  'scip.stats.':'sts',
                  }
 # index_range = list(range(1,len(import_dict)))
-df_imported= pd.DataFrame.from_dict(import_dict,orient='index', columns=['Module/Package Handle'])
+df_imported= pd.DataFrame.from_dict(import_dict,orient='index')
+df_imported.columns=['Module/Package Handle']
 list_packages = df_imported.index
 df_imported.reset_index(inplace=True)
 df_imported.columns=['Imported Module/Package','Imported As']
-df_imported.set_index('Imported Module/Package',inplace=True)
+# df_imported.set_index('Imported Module/Package',inplace=True)
 # inspect_df(df)
 from IPython.display import HTML
 pd.set_option('display.precision',3)
@@ -56,7 +57,7 @@ pd.set_option('display.html.border',2)
 pd.set_option('display.max_columns',None)
 # pd.set_option('display.html.table_schema',True)
 
-CSS="""
+CSS_new="""
 .{
 text-align: center;
 }
@@ -74,20 +75,61 @@ text-align: center;
 }
 
 """
+CSS = """
+table.dataframe td, table.dataframe th { /* This is for the borders for columns)*/
+    border: 2px solid black
+    border-collapse:collapse;
+    text-align:center;
+}
+table.dataframe th {
+    /*padding:1em 1em;*/
+    background-color: #000000;
+    color: #ffffff;
+    text-align: center;
+    font-weight: bold;
+    font-size: 12pt
+    font-weight: bold;
+    padding: 0.5em 0.5em;
+}
+table.dataframe td:not(:th){
+    /*border: 1px solid ##e8e8ea;*/
+    /*background-color: ##e8e8ea;*/
+    background-color: gainsboro;
+    text-align: center; 
+    vertical-align: middle;
+    font-size:10pt;
+    padding: 0.7em 1em;
+    /*padding: 0.1em 0.1em;*/
+}
+table.dataframe tr:not(:last-child) {
+    border-bottom: 1px solid gainsboro;
+}
+table.dataframe {
+    /*border-collapse: collapse;*/
+    background-color: gainsboro; /* This is alternate rows*/
+    text-align: center;
+    border: 2px solid black;
+}
+table.dataframe th:not(:empty), table.dataframe td{
+    border-right: 1px solid white;
+    text-align: center;
+}
+"""
 # HTML('<style>.output {flex-direction: row;}</style>')
-display(df_imported)
-HTML(f"<style>{CSS}</style>")
+
 def html_off():
     HTML("<style></style>")
 def html_on(CSS):
     HTML(f'<style>{CSS}</style>')
 
-function_list = ('color_true_rlist2df','df_drop_regex','viz_tree','performance_r2_mse','performance_roc_auc',
+
+function_list = ['color_true_rlist2df','df_drop_regex','viz_tree','performance_r2_mse','performance_roc_auc',
 'performance_roc_auc','tune_params_trees','multiplot','plot_hist_scat_sns','detect_outliers','describe_outliers','Cohen_d',
-'draw_violinplot','subplot_imshow','plot_wide_kde_thin_bar','confusion_matrix','scale_data')
+'draw_violinplot','subplot_imshow','plot_wide_kde_thin_bar','confusion_matrix','scale_data']
 excluded='plot_pdf'
-function_series = pd.DataFrame(function_list,columns=['List of Available Functions'])
-function_series.Name='Package_Functions'
+function_series = pd.DataFrame(function_list)
+function_series.columns=['List of Available Functions']
+# function_series.Name='Package_Functions'
 display(function_series)
 
 def color_true_green(val):
@@ -831,4 +873,5 @@ def select_pca(features, n_components):
 
 
 
-html_on(CSS)
+display(df_imported)
+HTML(f"<style>{CSS}</style>")
