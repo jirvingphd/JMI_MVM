@@ -24,16 +24,73 @@ import xgboost as xbg
 from xgboost import XGBClassifier
 import time
 import re
+
+## Styled Dataframe
+from IPython.display import HTML
+pd.set_option('display.precision',3)
+pd.set_option('display.html.border',2)
+pd.set_option('display.notebook_repr_htm',True)
+pd.set_option('display.max_columns',None)
+
+CSS = """
+table.dataframe td, table.dataframe th { /* This is for the borders for columns)*/
+    border: 2px solid black
+    border-collapse:collapse;
+    text-align:center;
+}
+table.dataframe th {
+    /*padding:1em 1em;*/
+    background-color: #000000;
+    color: #ffffff;
+    text-align: center;
+    font-weight: bold;
+    font-size: 12pt
+    font-weight: bold;
+    padding: 0.5em 0.5em;
+}
+table.dataframe td:not(:th){
+    /*border: 1px solid ##e8e8ea;*/
+    /*background-color: ##e8e8ea;*/
+    background-color: gainsboro;
+    text-align: center; 
+    vertical-align: middle;
+    font-size:10pt;
+    padding: 0.7em 1em;
+    /*padding: 0.1em 0.1em;*/
+}
+table.dataframe tr:not(:last-child) {
+    border-bottom: 1px solid gainsboro;
+}
+table.dataframe {
+    /*border-collapse: collapse;*/
+    background-color: gainsboro; /* This is alternate rows*/
+    text-align: center;
+    border: 2px solid black;
+}
+table.dataframe th:not(:empty), table.dataframe td{
+    border-right: 1px solid white;
+    text-align: center;
+}
+"""
+# HTML('<style>.output {flex-direction: row;}</style>')
+HTML(f"<style>{CSS}</style>")
+def html_off():
+    HTML(f"<style></style>")
+def html_on(CSS):
+    HTML(f'<style>{CSS}</style>')
+
+##
 import_dict = {'pandas':'pd',
                  'numpy':'np',
                  'matplotlib':'mpl',
                  'matplotlib.pyplot':'plt',
                  'seaborn':'sns',
-                 'scip.stats.':'sts',
-                 }
+                 'scip.stats.':'sts'}
+            
 # index_range = list(range(1,len(import_dict)))
 df_imported= pd.DataFrame.from_dict(import_dict,orient='index')
 df_imported.columns=['Module/Package Handle']
+display(df_imported)
 ## DataFrame Creation, Inspection, and Exporting
 def inspect_df(df,n_rows=2):
     """Displays df.head(),df.info(),df.describe() for dataframe. 
@@ -1286,3 +1343,4 @@ def compare_pipes(config_dict, X_train, y_train, X_test, y_test, n_components='m
         display(list2df(df_list))
     
     return compare_dict
+HTML(f"<style>{CSS}</style>")

@@ -1,80 +1,37 @@
-# name = "JMI_MVM v0.1.3"
-# from .startup import *
-# from .functions import *
-
-
-
-# help_ = print(f" Recommended Functions to try: \n tune_params_trees \n plot_hist_scat_sns & multiplot\n list2df & df_drop_regex\n plot_wide_kde_thin_bar & make_violinplot\n")
-#functions.py
-# import pandas as pd
-
-# # List of Functions Included (plus abbrevs for imported packages i.e. sns, np, plt)
-# import os.path
-# import os
-# import sys
-# sys.path.append('') 
-# sys.path.append(os.path.join(os.path.dirname(tools.py), '..'))
-
-
-# df_functions = pd.DataFrame([x for x in dir() if '__' not in x])
-# df_functions.columns=['Available_Functions']
-# df_functions.set_index('Available_Functions',inplace=True)
-# df_functions
-# print("Imported the following:\n pandas (pd), numpy(np), matplotlib.pyplot(plt), matplotlib(mpl), seaborn(sns), IPython.display(display)")
-# print('Imported successfully')
 import pandas as pd
-
-# from IPython.core.display import HTML
-# from IPython.display import display
-# f = open('CSSv2.css','r')
-# HTML('<style>{}</style>'.format(f.read()))
-# HTML(f'<style>{CSS}</style>')#.format(CSS)
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib as mpl
 import seaborn as sns
 import scipy.stats as sts
 from IPython.display import display
-import_dict = {'pandas':'pd',
-                 'numpy':'np',
-                 'matplotlib':'mpl',
-                 'matplotlib.pyplot':'plt',
-                 'seaborn':'sns',
-                 'scip.stats.':'sts',
-                 }
-# index_range = list(range(1,len(import_dict)))
-df_imported= pd.DataFrame.from_dict(import_dict,orient='index')
-df_imported.columns=['Module/Package Handle']
-list_packages = df_imported.index
-df_imported.reset_index(inplace=True)
-df_imported.columns=['Imported Module/Package','Imported As']
-# df_imported.set_index('Imported Module/Package',inplace=True)
-# inspect_df(df)
+import xgboost
+import sklearn
+import scipy
+from sklearn.svm import SVC
+from sklearn.linear_model import LogisticRegression, LogisticRegressionCV 
+from sklearn.model_selection import RandomizedSearchCV, GridSearchCV
+from sklearn.pipeline import Pipeline
+from sklearn.decomposition import PCA
+from sklearn.preprocessing import StandardScaler, RobustScaler, MinMaxScaler
+from scipy.stats import randint, expon
+from sklearn.model_selection import train_test_split
+from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier, AdaBoostClassifier
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.ensemble import VotingClassifier
+from sklearn.metrics import roc_auc_score
+import xgboost as xbg
+from xgboost import XGBClassifier
+import time
+import re
+
+## Styled Dataframe
 from IPython.display import HTML
 pd.set_option('display.precision',3)
 pd.set_option('display.html.border',2)
-# pd.set_option('display.notebook_repr_htm',True)
+pd.set_option('display.notebook_repr_htm',True)
 pd.set_option('display.max_columns',None)
-# pd.set_option('display.html.table_schema',True)
 
-CSS_new="""
-.{
-text-align: center;
-}
-th{
-background-color: black;
-color: white;
-font-family:serif;
-font-size:1.2em;
-}
-td{
-font-size:0.9em
-}
-td, th{
-text-align: center;
-}
-
-"""
 CSS = """
 table.dataframe td, table.dataframe th { /* This is for the borders for columns)*/
     border: 2px solid black
@@ -116,83 +73,122 @@ table.dataframe th:not(:empty), table.dataframe td{
 }
 """
 # HTML('<style>.output {flex-direction: row;}</style>')
-
+HTML(f"<style>{CSS}</style>")
 def html_off():
-    HTML("<style></style>")
+    HTML(f"<style></style>")
 def html_on(CSS):
     HTML(f'<style>{CSS}</style>')
 
-
-function_list = ['color_true_rlist2df','df_drop_regex','viz_tree','performance_r2_mse','performance_roc_auc',
-'performance_roc_auc','tune_params_trees','multiplot','plot_hist_scat_sns','detect_outliers','describe_outliers','Cohen_d',
-'draw_violinplot','subplot_imshow','plot_wide_kde_thin_bar','confusion_matrix','scale_data']
-excluded='plot_pdf'
-function_series = pd.DataFrame(function_list)
-function_series.columns=['List of Available Functions']
-# function_series.Name='Package_Functions'
-display(function_series)
-
-def color_true_green(val):
-    """s = df.style.applymap(color_true_green)
-    returns CSS color tag for green text"""
-    color='green' if val==True else 'black'
-    return f'color: {color}' 
-
-def inspect_df(df):
+##
+import_dict = {'pandas':'pd',
+                 'numpy':'np',
+                 'matplotlib':'mpl',
+                 'matplotlib.pyplot':'plt',
+                 'seaborn':'sns',
+                 'scip.stats.':'sts'}
+            
+# index_range = list(range(1,len(import_dict)))
+df_imported= pd.DataFrame.from_dict(import_dict,orient='index')
+df_imported.columns=['Module/Package Handle']
+display(df_imported)
+## DataFrame Creation, Inspection, and Exporting
+def inspect_df(df,n_rows=2):
+    """Displays df.head(),df.info(),df.describe() for dataframe. 
+    Ex: inspect_df(df)"""
     pd.set_option('display.precision',3)
     pd.set_option('display.html.border',2)
     pd.set_option('display.notebook_repr_htm',True)
-    display(df.head(2))
-    display(df.info()),display(df.describe())
+    display(df.head(n_rows))
+    display(df.info()), display(df.describe())
 
-def list2df(list,styled=True):#, sort_values='index'):
-    """ Take in a list where row[0] = column_names and outputs a dataframe.
-    
-    Keyword arguments:
-    set_index -- df.set_index(set_index)
-    sortby -- df.sorted()
+def list2df(list):#, sort_values='index'):
+    """ Take a list where each row becomes a dataframe row and the row[0] contains the columns names.
+    Ex: list_results = [["Test","N","p-val"]] #... (some sort of analysis performed to produce results)
+        list_results.append([test_Name,length(data),p])
+        list2df(list_results)
     """    
-    if styled==True:
-        html_on(CSS)
-    else:
-        html_off()
-    df_list = pd.DataFrame(list[1:],columns=list[0])
+    df_list = pd.DataFrame(list[1:],columns=list[0])        
     return df_list
 
-def df_drop_regex(DF, regex_list):
-    '''Use a list of regex to remove columns names. Returns new df.
+def drop_cols(df, list_of_strings_or_regexp):#,axis=1):
+    """Take a df, a list of strings or regular expression and recursively 
+    removes all matching column names containing those strings or expressions.
+    # Example: if the df_in columns are ['price','sqft','sqft_living','sqft15','sqft_living15','floors','bedrooms']
+    df_out = drop_cols(df_in, ['sqft','bedroom'])
+    df_out.columns # will output: ['price','floors']
     
     Parameters:
         DF -- input dataframe to remove columns from.
         regex_list -- list of string patterns or regexp to remove.
     
     Returns:
-        df_cut -- input df without the dropped columns. 
-        '''
-    df_cut = DF.copy()
-    
+        df_dropped -- input df without the dropped columns. 
+    """
+    regex_list=list_of_strings_or_regexp
+    df_cut = df.copy()
     for r in regex_list:
-        
         df_cut = df_cut[df_cut.columns.drop(list(df_cut.filter(regex=r)))]
-        print(f'Removed {r}\n')
-        
-    return df_cut
+        print(f'Removed {r}.')
+    df_dropped = df_cut
+    return df_dropped
 
-def viz_tree(tree_object):
-    '''Takes a Sklearn Decision Tree and returns a png image using graph_viz and pydotplus.'''
-    # Visualize the decision tree using graph viz library 
-    from sklearn.externals.six import StringIO  
-    from IPython.display import Image  
-    from sklearn.tree import export_graphviz
-    import pydotplus
-    dot_data = StringIO()
-    export_graphviz(tree_object, out_file=dot_data, filled=True, rounded=True,special_characters=True)
-    graph = pydotplus.graph_from_dot_data(dot_data.getvalue())  
-    tree_viz = Image(graph.create_png())
-    return tree_viz
+## Dataframes styling
+
+# def highlight (helper: hover)
+def hover(hover_color="gold"):
+    from IPython.display import HTML
+    return dict(selector="tr:hover",
+                props=[("background-color", "%s" % hover_color)])
+def highlight(df,hover_color="gold"):
+    styles = [
+        hover(hover_color),
+        dict(selector="th", props=[("font-size", "115%"),
+                                   ("text-align", "center")]),
+        dict(selector="caption", props=[("caption-side", "bottom")])
+    ]
+    html = (df.style.set_table_styles(styles)
+              .set_caption("Hover to highlight."))
+    return html
 
 
+def color_true_green(val):
+    """Changes text color to green if value is True
+    Ex: style_df = df.style.applymap(color_true_green)
+        style_df #to display"""
+    color='green' if val==True else 'black'
+    return f'color: {color}' 
 
+# Style dataframe for easy visualization
+def color_scale_columns(df,matplotlib_cmap = "Greens",subset=None,):
+    """
+    Takes a df, any valid matplotlib colormap column names(matplotlib.org/tutorials/colors/colormaps.html) 
+    and returns a dataframe with a gradient colormap applied to column values.
+    Ex. color_scale_columns(df,"YlGn")
+    
+    Parameters:
+    -----------
+    df: DataFrame containing columns to style.
+    subset: Names of columns to color-code.
+    cmap: Any matplotlib colormap. https://matplotlib.org/tutorials/colors/colormaps.html
+    Colormap to use instead of default seaborn green.  
+    
+    Returns:
+    ----------
+    df_style : df.style
+
+    """ 
+    from IPython.display import display  
+    import seaborn as sns
+    cm = matplotlib_cmap
+    #     cm = sns.light_palette("green", as_cmap=True)
+    df_style = df.style.background_gradient(cmap=cm,subset=subset)#,low=results.min(),high=results.max())
+    # Display styled dataframe
+#     display(df_style)
+    return df_style
+
+## James' Tree Classifier/Regressor 
+
+# def tune_params_trees (helpers: performance_r2_mse, performance_roc_auc)
 def performance_r2_mse(y_true, y_pred):
     """ Calculates and returns the performance score between 
         true and predicted values based on the metric chosen. """
@@ -276,8 +272,22 @@ def tune_params_trees(param_name, param_values, DecisionTreeObject, X,Y,test_siz
     
     return df_results
 
-# MULTIPLOT
 
+# Display graphviz tree
+def viz_tree(tree_object):
+    '''Takes a Sklearn Decision Tree and returns a png image using graph_viz and pydotplus.'''
+    # Visualize the decision tree using graph viz library 
+    from sklearn.externals.six import StringIO  
+    from IPython.display import Image  
+    from sklearn.tree import export_graphviz
+    import pydotplus
+    dot_data = StringIO()
+    export_graphviz(tree_object, out_file=dot_data, filled=True, rounded=True,special_characters=True)
+    graph = pydotplus.graph_from_dot_data(dot_data.getvalue())  
+    tree_viz = Image(graph.create_png())
+    return tree_viz
+
+# EDA / Plotting Functions
 def multiplot(df):
     """Plots results from df.corr() in a correlation heat map for multicollinearity.
     Returns fig, ax objects"""
@@ -309,10 +319,8 @@ def multiplot(df):
     square=True, linewidths=.5, cbar_kws={"shrink": .5})
     return f, ax
 
-
-
 # Plots histogram and scatter (vs price) side by side
-def plot_hist_reg(df, target='index'):
+def plot_hist_scat(df, target='index'):
     """Plots seaborne distplots and regplots for columns im datamframe vs target.
 
     Parameters:
@@ -439,11 +447,50 @@ def plot_hist_reg(df, target='index'):
     return fig, ax
 
 
+## Mike's Plotting Functions
+def draw_violinplot(x , y, hue=None, data=None, title=None,
+                    ticklabels=None, leg_label=None):
+    
+    '''Plots a violin plot with horizontal mean line, inner stick lines
+    y must be arraylike in order to plot mean line. x can be label in data'''
+
+    
+    fig,ax = plt.subplots(figsize=(12,10))
+
+    sns.violinplot(x, y, hue=hue,
+                   data = data,
+                   cut=2,
+                   split=True, 
+                   scale='count',
+                   scale_hue=True,
+                   saturation=.7,
+                   alpha=.9, 
+                   bw=.25,
+                   palette='Dark2',
+                   inner='stick'
+                  ).set_title(title)
+    
+    ax.set(xlabel= x.name.title(),
+          ylabel= y.name.title(),
+           xticklabels=ticklabels)
+    
+    ax.axhline( y.mean(),
+               label='Total Mean',
+               ls=':',
+               alpha=.2, 
+               color='xkcd:yellow')
+    
+    ax.legend().set_title(leg_label)
+
+    plt.show()
+    return fig, ax
+
+## Finding outliers and statistics
 # Tukey's method using IQR to eliminate 
 def detect_outliers(df, n, features):
     """Uses Tukey's method to return outer of interquartile ranges to return indices if outliers in a dataframe.
     Parameters:
-    df (DataFrame): DataFrane containing columns of features
+    df (DataFrame): DataFrame containing columns of features
     n: default is 0, multiple outlier cutoff  
     
     Returns:
@@ -484,14 +531,22 @@ def detect_outliers(df, n, features):
     return multiple_outliers 
 
 
-# describe_outliers -- calls detect_outliers
+def find_outliers(column):
+    quartile_1, quartile_3 = np.percentile(column, [25, 75])
+    IQR = quartile_3 - quartile_1
+    low_outlier = quartile_1 - (IQR * 1.5)
+    high_outlier = quartile_3 + (IQR * 1.5)    
+    outlier_index = column[(column < low_outlier) | (column > high_outlier)].index
+    return outlier_index
+
+# describe_outliers -- calls find_outliers
 def describe_outliers(df):
     """ Returns a new_df of outliers, and % outliers each col using detect_outliers.
     """
     out_count = 0
     new_df = pd.DataFrame(columns=['total_outliers', 'percent_total'])
     for col in df.columns:
-        outies = detect_outliers(df[col],0)
+        outies = find_outliers(df[col])
         out_count += len(outies) 
         new_df.loc[col] = [len(outies), round((len(outies)/len(df.index))*100, 2)]
     new_df.loc['grand_total'] = [sum(new_df['total_outliers']), sum(new_df['percent_total'])]
@@ -519,65 +574,7 @@ def Cohen_d(group1, group2):
     
     return d
 
-## commented out due to missing evaluate_PDF function
-# def plot_pdfs(cohen_d=2):
-#     """Plot PDFs for distributions that differ by some number of stds.
-    
-#     cohen_d: number of standard deviations between the means
-#     """
-#     import scipy 
-#     group1 = scipy.stats.norm(0, 1)
-#     group2 = scipy.stats.norm(cohen_d, 1)
-#     xs, ys = evaluate_PDF(group1)
-#     pyplot.fill_between(xs, ys, label='Group1', color='#ff2289', alpha=0.7)
 
-#     xs, ys = evaluate_PDF(group2)
-#     pyplot.fill_between(xs, ys, label='Group2', color='#376cb0', alpha=0.7)
-    
-#     o, s = overlap_superiority(group1, group2)
-#     print('overlap', o)
-#     print('superiority', s)
-
-
-####### MIKE's PLOTTING
-# plotting order totals per month in violin plots
-
-def draw_violinplot(x , y, hue=None, data=None, title=None,
-                    ticklabels=None, leg_label=None):
-    
-    '''Plots a violin plot with horizontal mean line, inner stick lines
-    y must be arraylike in order to plot mean line. x can be label in data'''
-
-    
-    fig,ax = plt.subplots(figsize=(12,10))
-
-    sns.violinplot(x, y, hue=hue,
-                   data = data,
-                   cut=2,
-                   split=True, 
-                   scale='count',
-                   scale_hue=True,
-                   saturation=.7,
-                   alpha=.9, 
-                   bw=.25,
-                   palette='Dark2',
-                   inner='stick'
-                  ).set_title(title)
-    
-    ax.set(xlabel= x.name.title(),
-          ylabel= y.name.title(),
-           xticklabels=ticklabels)
-    
-    ax.axhline( y.mean(),
-               label='Total Mean',
-               ls=':',
-               alpha=.2, 
-               color='xkcd:yellow')
-    
-    ax.legend().set_title(leg_label)
-
-    plt.show()
-    return fig, ax
 
 #####
 def subplot_imshow(images, num_images,num_rows, num_cols, figsize=(20,15)):
@@ -594,18 +591,19 @@ def subplot_imshow(images, num_images,num_rows, num_cols, figsize=(20,15)):
     
     returns:  figure with as many subplots as images given
     '''
+
     import matplotlib.pyplot as plt
     fig = plt.figure(figsize=figsize)
     for i in range(num_images):
         ax = fig.add_subplot(num_rows,num_cols, i+1, xticks=[], yticks=[])
-        ax.imshow(images[i],cmap=plt.cm.gray)
+        ax.imshow(images[i],cmap=plt.gray)
         
     plt.show()
     
     return fig, ax
 #####
 ###########
-def plot_wide_kde_thin_bar(series1,sname1, series2, sname2):
+def plot_wide_kde_thin_bars(series1,sname1, series2, sname2):
     '''Plot series1 and series 2 on wide kde plot with small mean+sem bar plot.'''
     
     ## ADDING add_gridspec usage
@@ -623,15 +621,10 @@ def plot_wide_kde_thin_bar(series1,sname1, series2, sname2):
     from matplotlib import rc
     rcParams['font.family'] = 'serif'
 
-
-
-
     # Plot distributions of discounted vs full price groups
     plt.style.use('default')
     # with plt.style.context(('tableau-colorblind10')):
     with plt.style.context(('seaborn-notebook')):
-
-        
 
         ## ----------- DEFINE AESTHETIC CUSTOMIZATIONS ----------- ##
        # Axis Label fonts
@@ -752,28 +745,7 @@ def plot_wide_kde_thin_bar(series1,sname1, series2, sname2):
         plt.show()
 
         return fig,ax
-        
-# from confusion matrix lab
-def confusion_matrix(labels, predictions):
-    conf_matrix = {"TP": 0, "FP": 0, "TN": 0, "FN": 0}
-    for ind, label in enumerate(labels):
-        pred = predictions[ind]
-        if label == 1:
-            # CASE: True Positive
-            if label == pred:
-                conf_matrix['TP'] += 1
-            # CASE: False Negative 
-            else:
-                conf_matrix['FN'] += 1
-        else:
-            # CASE: True Negative
-            if label == pred:
-                conf_matrix['TN'] += 1
-            # CASE: False Positive
-            else:
-                conf_matrix['FP'] += 1
-    
-    return conf_matrix
+
 
 def scale_data(data, method='minmax', log=False):
     
@@ -833,7 +805,28 @@ def scale_data(data, method='minmax', log=False):
     return df_scaled
 
 
-def select_pca(features, n_components):
+## Mike's modeling:
+# import xgboost
+# import sklearn
+# import scipy
+# from sklearn.svm import SVC
+# from sklearn.linear_model import LogisticRegression, LogisticRegressionCV 
+# from sklearn.model_selection import RandomizedSearchCV, GridSearchCV
+# from sklearn.pipeline import Pipeline
+# from sklearn.decomposition import PCA
+# from sklearn.preprocessing import StandardScaler, RobustScaler, MinMaxScaler
+# from scipy.stats import randint, expon
+# from sklearn.model_selection import train_test_split
+# from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier, AdaBoostClassifier
+# from sklearn.tree import DecisionTreeClassifier
+# from sklearn.ensemble import VotingClassifier
+# from sklearn.metrics import roc_auc_score
+# import xgboost as xbg
+# from xgboost import XGBClassifier
+# import time
+# import re
+
+def select_pca(features, n_components_list):
     
     '''
     Takes features and list of n_components to run PCA on
@@ -853,17 +846,17 @@ def select_pca(features, n_components):
     from sklearn.decomposition import PCA
     
     # Create list to store results in
-    results = [['n_components', 'Explained Variance']]
+    results = [['Model','n_components', 'Explained_Variance_ratio_']]
     
     # Loop through list of components to do PCA on
-    for n in n_components:
+    for n in n_components_list:
         
         # Creat instance of PCA class
         pca = PCA(n_components=n)
         pca.fit_transform(features)
         
         # Create list of n_component and Explained Variance
-        component_variance = [n, np.sum(pca.explained_variance_ratio_)]
+        component_variance = ['PCA',n, np.sum(pca.explained_variance_ratio_)]
         
         # Append list results list
         results.append(component_variance)
@@ -873,5 +866,481 @@ def select_pca(features, n_components):
 
 
 
-display(df_imported)
+def train_test_dict(X, y, test_size=.25, random_state=42):
+    
+    """
+    Splits data into train/test sets and returns diction with each variable its own key and value.
+    """
+
+    train_test = {}
+    X_train, y_train, X_test, y_test = train_test_split(X, y, test_size, random_state)
+    train_test['X_train'] = X_train
+    train_test['y_train'] = y_train
+    train_test['X_test'] = X_test
+    train_test['y_test'] = y_test
+
+    return train_test
+
+def make_estimators_dict():
+    
+    """
+    Instantiates models as first step for creating pipelines.
+    
+    """
+    # instantiate classifier objects
+    xgb = XGBClassifier()
+    svc = SVC()
+    lr = LogisticRegression()
+    gb = GradientBoostingClassifier()
+    rf = RandomForestClassifier()
+    dt = DecisionTreeClassifier()
+    ab = AdaBoostClassifier()
+
+    estimators = {
+        'xgb': xgb,
+        'SVC': svc,
+        'Logisic Regression': lr,
+        'GradientBoosting': gb,
+        'Random Forest': rf,
+        'Decision Tree': dt,
+        'AdaBoost': ab
+    }
+    return estimators
+
+
+def make_pipes(estimators_dict, scaler=StandardScaler, n_components='mle', random_state=42):
+
+    """
+    Makes pipelines for given models, outputs dictionaries with keys as names and pipeline objects as values.
+    
+    Parameters:
+    ---------------
+    estimators: dict,
+            dictionary with name (str) as key and estimator objects as values.
+    scaler: sklearn.preprocessing instave
+    """
+
+    # Create dictionary to store pipelines
+    pipe_dict = {}
+
+    # Instantiate piplines for each model
+    for k, v in estimators_dict.items():
+        pipe = Pipeline([('scaler', scaler()),
+                        ('pca', PCA(n_components=n_components,random_state=random_state)),
+                        ('clf', v(random_state=random_state))])
+        # append to dictionary
+        pipe_dict[k] = pipe
+    
+    return pipe_dict
+
+
+
+
+
+def fit_pipes(pipes_dict, train_test, predict=True, verbose=True, score='accuracy'):
+
+    """
+    Fits piplines to training data, if predict=True, it displays a dataframe of scores.
+    score can be either 'accuracy' or 'roc_auc'. rco_auc_score should be used with binary classification.
+    
+     """
+
+    fit_pipes = {}
+    score_display = [['Estimator', f'Test {score}']]
+    
+    # Assert test/train sets are approriate types
+    if type(train_test) == dict:
+        X = train_test['X_train']
+        y = train_test['y_train']
+        X_test = train_test['X_test']
+        y_test = train_test['y_test']
+
+    elif type(train_test) == list:
+        X = train_test[0]
+        y = train_test[1]
+        X_test = train_test[2]
+        y_test = train_test[3]
+
+    else:
+        raise ValueError('train_test must be either list or dictionary')
+        
+    # Implement timer    
+    start = time.time()
+    
+    if verbose:
+        print(f'fitting {len(pipes_dict)} models')
+
+    # Fit pipes, predict if True
+    for name, pipe in pipes_dict.items():
+
+        fit_pipe = pipe.fit(X, y)
+        fit_pipes['name'] = fit_pipe
+        
+        # Get accuracy or roc_auc score ,append to display list
+        if predict:
+            print(f'\nscoring {name} model')
+
+            if score == 'accuracy':
+                score_display.append(name, fit_pipe.score(X_test, y_test))
+
+            elif score == 'roc_auc':
+                score_display.append(name, roc_auc_score(y_test,fit_pipe.decision_function(X_test)))
+
+            else:
+                raise ValueError(f"score expected 'accuracy' of 'roc_auc', was given {score}")
+    # End timer
+    stop = time.time()
+    
+    if verbose:
+        print(f'\nTime to fit all pipeline:{(stop-start)/60} minutes')
+
+    # display results dataframe if prediction and verbosity
+    if predict:
+        display(list2df(score_display))
+    
+    return fit_pipes
+config_dict = {
+    sklearn.linear_model.LogisticRegressionCV:[{
+
+        }],
+        sklearn.linear_model.LogisticRegression:[{
+            'clf__penalty':['l1'],
+            'clf__C':[0.1, 1, 10, 15 ],
+            'clf__tol':[1e-5, 1e-4, 1e-3],
+            'clf__solver':['liblinear', 'newton-cg'],
+            'clf__n_jobs':[-1]
+            }, {
+            'clf__penalty':['l2'],
+            'clf__C':[0.1, 1, 10, 15 ],
+            'clf__tol':[1e-5, 1e-4, 1e-3],
+            'clf__solver':['lbfgs', 'sag'],
+            'clf__n_jobs':[-1]
+            }], 
+            sklearn.ensemble.RandomForestClassifier:[{
+                'clf__n_estimators':[10, 50, 100], 
+                'clf__criterion':['gini', 'entropy'],
+                'clf__max_depth':[4, 6, 10], 
+                'clf__min_samples_leaf':[0.1, 1, 5, 15],
+                'clf__min_samples_split':[0.05 ,0.1, 0.2],
+                'clf__n_jobs':[-1]
+                }],
+                sklearn.svm.SVC:[{
+                    'clf__C': [0.1, 1, 10], 
+                    'clf__kernel': ['linear']
+                    },{
+                    'clf__C': [1, 10], 
+                    'clf__gamma': [0.001, 0.01], 
+                    'clf__kernel': ['rbf']
+                    }],
+                    sklearn.ensemble.GradientBoostingClassifier:[{
+                        'clf__loss':['deviance'], 
+                        'clf__learning_rate': [0.1, 0.5, 1.0],
+                        'clf__n_estimators': [50, 100, 150]
+                        }], 
+                        xgboost.sklearn.XGBClassifier:[{
+                            'clf__learning_rate':[.001, .01],
+                            'clf__n_estimators': [1000,  100],
+                            'clf__max_depth': [3, 5]
+                            }]
+    }
+    
+random_config_dict = {
+    sklearn.ensemble.RandomForestClassifier:{
+        'clf__n_estimators': [100 ,500, 1000],
+        'clf__criterion': ['gini', 'entropy'],
+        'clf__max_depth': randint(1,100),
+        'clf__max_features': randint(1,100),
+        'clf__min_samples_leaf': randint(1, 100),
+        'clf__min_samples_split': randint(2, 10),
+        'clf__n_jobs':[-1]
+        }, 
+        xgboost.sklearn.XGBClassifier:{
+            'clf__silent': [False],
+            'clf__max_depth': [6, 10, 15, 20],
+            'clf__learning_rate': [0.001, 0.01, 0.1, 0.2, 0,3],
+            'clf__subsample': [0.5, 0.6, 0.7, 0.8, 0.9, 1.0],
+            'clf__colsample_bytree': [0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0],
+            'clf__colsample_bylevel': [0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0],
+            'clf__min_child_weight': [0.5, 1.0, 3.0, 5.0, 7.0, 10.0],
+            'clf__gamma': [0, 0.25, 0.5, 1.0],
+            'clf__reg_lambda': [0.1, 1.0, 5.0, 10.0, 50.0, 100.0],
+            'clf__n_estimators': [100]
+            },
+            sklearn.svm.SVC:{
+                'clf__C': scipy.stats.expon(scale=100), 
+                'clf__gamma': scipy.stats.expon(scale=.1),
+                'clf__kernel': ['linear','rbf'], 
+                'clf__class_weight':['balanced', None]
+                }
+    }
+
+
+
+def pipe_search(estimator, params, X_train, y_train, X_test, y_test, n_components='mle',
+                scaler=StandardScaler(), random_state=42, cv=3, verbose=2, n_jobs=-1):
+
+    """
+    Fits pipeline and performs a grid search with cross validation using with given estimator
+    and parameters.
+    
+    Parameters:
+    --------------
+    estimator: estimator object,
+            This is assumed to implement the scikit-learn estimator interface. 
+            Ex. sklearn.svm.SVC
+    params: dict, list of dicts,
+            Dictionary with parameters names (string) as keys and lists of parameter 
+            settings to try as values, or a list of such dictionaries, in which case
+            the grids spanned by each dictionary in the list are explored.This enables
+            searching over any sequence of parameter settings.
+            MUST BE IN FORM: 'clf__param_'. ex. 'clf__C':[1, 10, 100]
+    X_train, y_train, X_test, y_test: 
+            training and testing data to fit, test to model
+    n_components: int, float, None or str. default='mle'
+            Number of components to keep. if n_components is not set all components are kept.
+            If n_components == 'mle'  Minka’s MLE is used to guess the dimension. For PCA.
+    random_state: int, RandomState instance or None, optional, default=42
+            Pseudo random number generator state used for random uniform sampling from lists of 
+            possible values instead of scipy.stats distributions. If int, random_state is the 
+            seed used by the random number generator; If RandomState instance, random_state 
+            is the random number generator; If None, the random number generator is the 
+            RandomState instance used by np.random.
+    cv:  int, cross-validation generator or an iterable, optional
+            Determines the cross-validation splitting strategy. Possible inputs for cv are:
+                None, to use the default 3-fold cross validation,
+                integer, to specify the number of folds in a (Stratified)KFold,
+                CV splitter,
+                An iterable yielding (train, test) splits as arrays of indices.
+    verbose : int,
+            Controls the verbosity: the higher, the more messages.
+    n_jobs : int or None, optional (default = -1)
+            Number of jobs to run in parallel. None means 1 unless in a joblib.parallel_backend 
+            context. -1 means using all processors. See Glossary for more details.
+
+    Returns:
+    ------------
+        dictionary:
+                keys are: 'test_score' , 'best_accuracy' (training validation score),
+                'best_params', 'best_estimator', 'results'
+    """
+    # create dictionary to store results.
+    results = {}
+    # Instantiate pipeline object.
+    pipe = Pipeline([('scaler', scaler),
+                        ('pca', PCA(n_components=n_components,random_state=random_state)),
+                        ('clf', estimator(random_state=random_state))])
+
+    # start timer and fit pipeline.                        
+    start = time.time()
+    pipe.fit(X_train, y_train)
+
+    # Instantiate and fit gridsearch object.
+    grid = GridSearchCV(estimator = pipe,
+        param_grid = params,
+        scoring = 'accuracy',
+        cv = cv, verbose = verbose, n_jobs=n_jobs, return_train_score = True)
+
+    grid.fit(X_train, y_train)
+
+    # Store results in dictionary.
+    results['test_score'] = grid.score(X_test, y_test)
+    results['best_accuracy'] = grid.best_score_
+    results['best_params'] = grid.best_params_
+    results['best_estimator'] = grid.best_estimator_
+    results['results'] = grid.cv_results_
+
+    # End timer and print results if verbosity higher than 0.
+    end = time.time()
+    if verbose > 0:
+        name = str(estimator).split(".")[-1].split("'")[0]
+        print(f'{name} \nBest Score: {grid.best_score_} \nBest Params: {grid.best_params_} ')
+        print(f'\nest Estimator: {grid.best_estimator_}')
+        print(f'\nTime Elapsed: {((end - start))/60} minutes')
+    
+    return results
+
+
+def random_pipe(estimator, params, X_train, y_train, X_test, y_test, n_components='mle',
+                scaler=StandardScaler(), n_iter=10, random_state=42, cv=3, verbose=2, n_jobs=-1):
+
+    """
+    Fits pipeline and performs a randomized grid search with cross validation.
+    
+    Parameters:
+    --------------
+    estimator: estimator object,
+            This is assumed to implement the scikit-learn estimator interface. 
+            Ex. sklearn.svm.SVC 
+    params: dict, 
+            Dictionary with parameters names (string) as keys and distributions or
+             lists of parameters to try. Distributions must provide a rvs method for 
+             sampling (such as those from scipy.stats.distributions). 
+             If a list is given, it is sampled uniformly.
+            MUST BE IN FORM: 'clf__param_'. ex. 'clf__C':[1, 10, 100]
+    n_components: int, float, None or str. default='mle'
+            Number of components to keep. if n_components is not set all components are kept.
+            If n_components == 'mle'  Minka’s MLE is used to guess the dimension. For PCA.
+    X_train, y_train, X_test, y_test: 
+            training and testing data to fit, test to model
+    scaler: sklearn.preprocessing class instance,
+            MUST BE IN FORM: StandardScaler(), (default=StandardScaler())
+    n_iter: int,
+            Number of parameter settings that are sampled. n_iter trades off 
+            runtime vs quality of the solution.
+    random_state: int, RandomState instance or None, optional, default=42
+            Pseudo random number generator state used for random uniform sampling from lists of 
+            possible values instead of scipy.stats distributions. If int, random_state is the 
+            seed used by the random number generator; If RandomState instance, random_state 
+            is the random number generator; If None, the random number generator is the 
+            RandomState instance used by np.random.
+    cv:  int, cross-validation generator or an iterable, optional
+            Determines the cross-validation splitting strategy. Possible inputs for cv are:
+                None, to use the default 3-fold cross validation,
+                integer, to specify the number of folds in a (Stratified)KFold,
+                CV splitter,
+                An iterable yielding (train, test) splits as arrays of indices.
+    verbose : int,
+            Controls the verbosity: the higher, the more messages.
+    n_jobs : int or None, optional (default = -1)
+            Number of jobs to run in parallel. None means 1 unless in a joblib.parallel_backend 
+            context. -1 means using all processors. See Glossary for more details.
+    
+     Returns:
+    ------------
+        dictionary:
+                keys are: 'test_score' , 'best_accuracy' (training validation score),
+                'best_params', 'best_estimator', 'results'
+    
+    """
+    # Start timer
+    start = time.time()
+
+    # Create dictioinary for storing results.
+    results = {}
+    # Instantiate Pipeline object.
+    pipe = Pipeline([('scaler', scaler),
+                        ('pca', PCA(n_components=n_components,random_state=random_state)),
+                        ('clf', estimator(random_state=random_state))])
+
+    # Fit pipeline to training data.                    
+    pipe.fit(X_train, y_train)
+
+    # Instantiate RandomizedSearchCV object.
+    grid = RandomizedSearchCV(estimator = pipe,
+        param_distributions = params,
+        n_iter = n_iter,
+        scoring = 'accuracy',
+        cv = cv, verbose = verbose, n_jobs=n_jobs, return_train_score = True)
+
+    # Fit gridsearch object to training data.
+    grid.fit(X_train, y_train)
+
+    # Store Test scores in results dictionary.
+    results['test_score'] = grid.score(X_test, y_test)
+    results['best_accuracy'] = grid.best_score_
+    results['best_params'] = grid.best_params_
+    results['best_estimator'] = grid.best_estimator_
+    results['results'] = grid.cv_results_
+
+    # End timer
+    end = time.time()
+
+    # print concise results if verbosity greater than 0.
+    if verbose > 0:
+        name = str(estimator).split(".")[-1].split("'")[0]
+        print(f'{name} \nBest Score: {grid.best_score_} \nBest Params: {grid.best_params_} ')
+        print(f'\nBest Estimator: {grid.best_estimator_}')
+        print(f'\nTime Elapsed: {((end - start))/60} minutes')
+    
+    return results
+
+def compare_pipes(config_dict, X_train, y_train, X_test, y_test, n_components='mle',
+                 search='random',scaler=StandardScaler(), n_iter=10, random_state=42,
+                  cv=3, verbose=2, n_jobs=-1):
+    """
+    Runs any number of estimators through pipeline and gridsearch(exhaustive or radomized) with cross validations, 
+    can print dataframe with scores, returns dictionary of all results.
+
+    Parameters:
+    --------------
+    estimator: estimator object,
+            This is assumed to implement the scikit-learn estimator interface. 
+            Ex. sklearn.svm.SVC 
+    params: dict, or list of dictionaries if using GridSearchcv, cannot pass lists if search='random
+            Dictionary with parameters names (string) as keys and distributions or
+             lists of parameters to try. Distributions must provide a rvs method for 
+             sampling (such as those from scipy.stats.distributions). 
+             If a list is given, it is sampled uniformly.
+            MUST BE IN FORM: 'clf__param_'. ex. 'clf__C':[1, 10, 100]
+    X_train, y_train, X_test, y_test: 
+            training and testing data to fit, test to model
+    n_components: int, float, None or str. default='mle'
+            Number of components to keep. if n_components is not set all components are kept.
+            If n_components == 'mle'  Minka’s MLE is used to guess the dimension. For PCA.
+    search: str, 'random' or 'grid',
+            Type of gridsearch to execute, 'random' = RandomizedSearchCV,
+            'grid' = GridSearchCV.
+    scaler: sklearn.preprocessing class instance,
+            MUST BE IN FORM: StandardScaler(), (default=StandardScaler())
+    n_iter: int,
+            Number of parameter settings that are sampled. n_iter trades off 
+            runtime vs quality of the solution.
+    random_state: int, RandomState instance or None, optional, default=42
+            Pseudo random number generator state used for random uniform sampling from lists of 
+            possible values instead of scipy.stats distributions. If int, random_state is the 
+            seed used by the random number generator; If RandomState instance, random_state 
+            is the random number generator; If None, the random number generator is the 
+            RandomState instance used by np.random.
+    cv:  int, cross-validation generator or an iterable, optional
+            Determines the cross-validation splitting strategy. Possible inputs for cv are:
+                None, to use the default 3-fold cross validation,
+                integer, to specify the number of folds in a (Stratified)KFold,
+                CV splitter,
+                An iterable yielding (train, test) splits as arrays of indices.
+    verbose : int,
+            Controls the verbosity: the higher, the more messages.
+    n_jobs : int or None, optional (default = -1)
+            Number of jobs to run in parallel. None means 1 unless in a joblib.parallel_backend 
+            context. -1 means using all processors. See Glossary for more details.
+
+    """
+
+    #Start timer
+    begin = time.time()
+    # CreateDictionary to store results from each grid search. Create list for displaying results.
+    compare_dict = {}
+    df_list = [['estimator', 'Test Score', 'Best Accuracy Score']]
+    # Loop through dictionary instantiate pipeline and grid search on each estimator.
+    for k, v in config_dict.items():
+
+        # perform RandomizedSearchCV.
+        if search == 'random':
+
+            # Assert params are in correct form, as to not raise error after running search.
+            if type (v) == list:
+                raise ValueError("'For random search, params must be dictionary, not list ")
+            else:
+                results = random_pipe(k, v, X_train, y_train, X_test, y_test, n_components, 
+                                    scaler, n_iter, random_state, cv, verbose, n_jobs)
+        # Perform GridSearchCV.
+        elif search == 'grid':
+            results = pipe_search(k, v, X_train, y_train, X_test, y_test, n_components, 
+                                        scaler, random_state, cv, verbose, n_jobs )
+
+        # Raise error if grid parameter not specified.
+        else:
+            raise ValueError(f"search expected 'random' or 'grid' instead got{search}")
+
+        # append results to display list and dictionary.
+        name = str(k).split(".")[-1].split("'")[0]
+        compare_dict[name] = results
+        df_list.append([name, results['test_score'], results['best_accuracy']])
+
+    # Display results if verbosity greater than 0.
+    finish = time.time()
+    if verbose > 0:
+        print(f'\nTotal runtime: {((finish - begin)/60)}')
+        display(list2df(df_list))
+    
+    return compare_dict
 HTML(f"<style>{CSS}</style>")

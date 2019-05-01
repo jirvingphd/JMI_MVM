@@ -2,6 +2,7 @@ MANIFEST.in
 README.md
 setup.py
 JMI_MVM/__init__.py
+JMI_MVM/__init__orig.py
 JMI_MVM.egg-info/PKG-INFO
 JMI_MVM.egg-info/SOURCES.txt
 JMI_MVM.egg-info/dependency_links.txt
