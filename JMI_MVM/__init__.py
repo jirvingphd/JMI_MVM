@@ -1621,5 +1621,93 @@ class MetaClassifier(BaseEstimator, ClassifierMixin, TransformerMixin):
 # check_estimator(MetaClassifier())
 
 
+def thick_pipe(features, target, n_components,
+               classifiers=[
+                   LogisticRegression,
+                   svm.SVC, 
+                   tree.DecisionTreeClassifier, 
+                   RandomForestClassifier,
+                   AdaBoostClassifier,
+                   GradientBoostingClassifier,
+                   xgboost.sklearn.XGBClassifier
+               ], test_size=.25, split_rand=None, class_rand=None, verbose=False):
+    
+    """
+    Takes features and target, train/test splits and runs each through pipeline,
+    outputs accuracy results models and train/test set in dictionary.
+    
+    Params:
+    ------------
+    features: pd.Dataframe, variable features
+    target: pd.Series, classes/labels
+    n_components: int, number of priniciple components, use select_pca() to determine this number
+    classifiers: list, classificaation models put in pipeline
+    test_size: float, size of test set for test_train_split (default=.25)
+    split_rand: int, random_state parameter for test_train_split (default=None)
+    class_rand: int, random_state parameter for classifiers (default=None)
+    verbose: bool, will print pipline instances as they are created (default=False)
+    
+    Returns:
+    -----------
+    dictionary: keys are abbreviated name of model ('LogReg', 'DecTree', 'RandFor', 'SVC'),
+    'X_train', 'X_test', 'y_train', 'y_test'. Values are dictionaries with keys for models:
+    'accuracy', 'model'. values are: accuracy score,and the classification model.
+     values for train/test splits. """
+    
+    from JMI_MVM import list2df
+    from sklearn.pipeline import Pipeline
+    from sklearn.decomposition import PCA
+    from sklearn.model_selection import train_test_split
+    from sklearn.linear_model import LogisticRegression
+    from sklearn import svm
+    from sklearn.ensemble import RandomForestClassifier,AdaBoostClassifier, GradientBoostingClassifier
+    from sklearn import tree
+    import xgboost 
+    
+    
+    results = [['classifier', 'score']]
+    class_dict = {}
+    
+    X_train, X_test, y_train, y_test = train_test_split(features, target,
+                                                        test_size=test_size,
+                                                        random_state=split_rand)
+    
+    for classifier in classifiers:    
+    
+        pipe = Pipeline([('pca', PCA(n_components=n_components,random_state=class_rand)),
+                         ('clf', classifier(random_state=class_rand))])
+        
+        if verbose:
+            print(f'{classifier}:\n{pipe}')
+            
+        pipe.fit(X_train, y_train)
+        
+        if classifier == LogisticRegression:
+            name = 'LogReg'
+        elif classifier == tree.DecisionTreeClassifier:
+            name = 'DecTree'
+        elif classifier == RandomForestClassifier:
+            name = 'RandFor'
+        elif classifier == AdaBoostClassifier:
+            name = 'AdaBoost'
+        elif classifier == GradientBoostingClassifier:
+            name = 'GradBoost'
+        elif classifier ==  xgboost.sklearn.XGBClassifier:
+            name = 'xgb'
+        else:
+            name = 'SVC'
+        
+        accuracy = pipe.score(X_test, y_test)
+        results.append([name, accuracy])
+        class_dict[name] = {'accuracy': accuracy,'model': pipe}
+        
+    class_dict['X_train'] = X_train
+    class_dict['X_test'] = X_test
+    class_dict['y_train'] = y_train
+    class_dict['y_test'] = y_test
+    
+    display(list2df(results))
+    
+    return class_dict
 
 HTML(f"<style>{CSS}</style>")

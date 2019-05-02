@@ -1,6 +1,7 @@
 MANIFEST.in
 README.md
 setup.py
+JMI_MVM/MetaClassifier.py
 JMI_MVM/__init__.py
 JMI_MVM/__init__orig.py
 JMI_MVM.egg-info/PKG-INFO
