@@ -1624,12 +1624,12 @@ class MetaClassifier(BaseEstimator, ClassifierMixin, TransformerMixin):
 def thick_pipe(features, target, n_components,
                classifiers=[
                    LogisticRegression,
-                   svm.SVC, 
-                   tree.DecisionTreeClassifier, 
-                   RandomForestClassifier,
-                   AdaBoostClassifier,
-                   GradientBoostingClassifier,
-                   xgboost.sklearn.XGBClassifier
+                   sklearn.svm.SVC, 
+                   sklearn.tree.DecisionTreeClassifier, 
+                   sklearn.RandomForestClassifier,
+                   sklearn.AdaBoostClassifier,
+                   sklearn.GradientBoostingClassifier,
+                   sklearn.xgboost.sklearn.XGBClassifier
                ], test_size=.25, split_rand=None, class_rand=None, verbose=False):
     
     """
@@ -1654,15 +1654,7 @@ def thick_pipe(features, target, n_components,
     'accuracy', 'model'. values are: accuracy score,and the classification model.
      values for train/test splits. """
     
-    from JMI_MVM import list2df
-    from sklearn.pipeline import Pipeline
-    from sklearn.decomposition import PCA
-    from sklearn.model_selection import train_test_split
-    from sklearn.linear_model import LogisticRegression
-    from sklearn import svm
-    from sklearn.ensemble import RandomForestClassifier,AdaBoostClassifier, GradientBoostingClassifier
-    from sklearn import tree
-    import xgboost 
+    
     
     
     results = [['classifier', 'score']]
